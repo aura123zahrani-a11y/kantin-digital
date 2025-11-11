@@ -18,6 +18,8 @@
             height: 100%;
             background-color: rgba(0,0,0,0.5);
             z-index: 40;
+            /* Default to hidden, flex utility will show it */
+            display: none; 
         }
         .modal { z-index: 50; }
     </style>
@@ -46,7 +48,7 @@
                     Masuk
                 </button>
             </form>
-             <div class="text-xs text-center text-gray-500 mt-4 p-4 bg-gray-50 rounded-lg">
+             <div class="text-xs text-center text-gray-500 mt-4 p-4 bg-gray-50 rounded-lg hidden">
                 <p class="font-bold">Akun untuk Demo:</p>
                 <p><b>Siswa:</b> user / user123</p>
                 <p><b>Penjual:</b> penjual / penjual123</p>
@@ -64,7 +66,7 @@
                     <h1 class="text-xl font-bold">Kantin Sehat Digital</h1>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span id="welcome-message" class="font-medium"></span>
+                    <span id="welcome-message" class="font-medium text-sm text-gray-700 hidden md:block"></span>
                     <button id="logout-button" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm">
                         <i class="fas fa-sign-out-alt mr-1"></i> Logout
                     </button>
@@ -78,7 +80,7 @@
     </div>
 
     <!-- Modal (untuk edit menu oleh penjual) -->
-    <div id="edit-modal" class="modal-backdrop hidden items-center justify-center">
+    <div id="edit-modal" class="modal-backdrop items-center justify-center">
         <div class="modal bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
             <h2 class="text-2xl font-bold mb-4">Edit Menu</h2>
             <form id="edit-form">
@@ -170,6 +172,7 @@
                 loginPage.classList.remove('hidden');
                 appContent.classList.add('hidden');
                 loginForm.reset();
+                mainDashboard.innerHTML = ''; // Kosongkan dashboard
             });
 
             // --- FUNGSI RENDER UTAMA ---
@@ -224,9 +227,10 @@
 
             function renderMenuListSiswa() {
                 const menuListContainer = document.getElementById('menu-list-siswa');
+                if (!menuListContainer) return; // Guard clause
                 menuListContainer.innerHTML = menu.map(item => `
                     <div class="bg-white rounded-xl shadow-lg overflow-hidden transition-transform duration-300 card-hover">
-                        <img src="${item.foto}" alt="${item.nama}" class="w-full h-48 object-cover">
+                        <img src="${item.foto}" alt="${item.nama}" class="w-full h-48 object-cover" onerror="this.src='https://placehold.co/600x400/CCCCCC/FFFFFF?text=Gagal+Muat';">
                         <div class="p-4">
                             <h3 class="text-lg font-bold">${item.nama}</h3>
                             <p class="text-blue-600 font-semibold">Rp ${item.harga.toLocaleString('id-ID')}</p>
@@ -235,7 +239,7 @@
                             <div class="flex items-center space-x-2">
                                 <input type="number" id="qty-${item.id}" value="1" min="1" max="${item.stok}" class="w-16 p-2 border border-gray-300 rounded-lg text-center">
                                 <button data-id="${item.id}" class="tambah-keranjang-btn flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                                   <i class="fas fa-cart-plus"></i> Tambah
+                                    <i class="fas fa-cart-plus"></i> Tambah
                                 </button>
                             </div>
                             ` : `<p class="text-red-500 font-semibold">Stok Habis</p>`}
@@ -247,7 +251,8 @@
             function renderKeranjang() {
                 const keranjangContainer = document.getElementById('keranjang-list');
                 const checkoutContainer = document.getElementById('checkout-section');
-                
+                if (!keranjangContainer || !checkoutContainer) return; // Guard clause
+
                 if (keranjang.length === 0) {
                     keranjangContainer.innerHTML = `<p class="text-gray-500 text-center">Keranjang masih kosong.</p>`;
                     checkoutContainer.innerHTML = '';
@@ -293,6 +298,8 @@
             
             function renderRiwayatPesanan() {
                 const riwayatContainer = document.getElementById('riwayat-pesanan');
+                if (!riwayatContainer) return; // Guard clause
+
                 const pesananSiswa = pesanan.filter(p => p.user === currentUser.username);
                 if (pesananSiswa.length === 0) {
                     riwayatContainer.innerHTML = `<p class="text-gray-500">Belum ada riwayat pesanan.</p>`;
@@ -375,17 +382,18 @@
             
             function renderMenuListPenjual() {
                 const container = document.getElementById('menu-list-penjual');
+                if (!container) return; // Guard clause
                 container.innerHTML = menu.map(item => `
                     <div class="bg-white p-4 rounded-xl shadow-lg flex items-center justify-between">
-                         <div class="flex items-center space-x-4">
-                             <img src="${item.foto}" class="w-20 h-20 rounded-lg object-cover">
-                             <div>
-                                <p class="font-bold text-lg">${item.nama}</p>
+                         <div class="flex items-center space-x-4 overflow-hidden">
+                             <img src="${item.foto}" class="w-20 h-20 rounded-lg object-cover flex-shrink-0" onerror="this.src='https://placehold.co/200x200/CCCCCC/FFFFFF?text=Gagal+Muat';">
+                             <div class="min-w-0">
+                                <p class="font-bold text-lg truncate">${item.nama}</p>
                                 <p class="text-blue-600">Rp ${item.harga.toLocaleString('id-ID')}</p>
                                 <p class="text-sm text-gray-600">Stok: ${item.stok}</p>
                              </div>
                          </div>
-                         <div class="flex space-x-2">
+                         <div class="flex space-x-2 flex-shrink-0">
                             <button data-id="${item.id}" class="edit-menu-btn bg-yellow-400 text-white w-10 h-10 rounded-lg hover:bg-yellow-500"><i class="fas fa-edit"></i></button>
                             <button data-id="${item.id}" class="hapus-menu-btn bg-red-500 text-white w-10 h-10 rounded-lg hover:bg-red-600"><i class="fas fa-trash"></i></button>
                          </div>
@@ -395,13 +403,17 @@
 
             function renderPesananPenjual() {
                 const container = document.getElementById('pesanan-list-penjual');
-                if (pesanan.length === 0) {
+                if (!container) return; // Guard clause
+
+                const pesananAktif = pesanan.filter(p => p.status === 'Diproses');
+                if (pesananAktif.length === 0) {
                     container.innerHTML = `<p class="text-gray-500 text-center">Belum ada pesanan masuk.</p>`;
                     return;
                 }
-                container.innerHTML = pesanan.slice().reverse().map(p => `
+                container.innerHTML = pesananAktif.slice().reverse().map(p => `
                     <div class="border p-4 rounded-lg ${p.status === 'Selesai' ? 'bg-gray-100' : 'bg-yellow-50'}">
                         <p class="font-bold">Pesanan #${p.id} dari ${p.user}</p>
+                        <p class="text-sm font-medium">Metode: <span class="font-bold">${p.metode}</span></p>
                         <ul class="text-sm list-disc list-inside my-2">
                             ${p.items.map(i => `<li>${i.nama} x${i.jumlah}</li>`).join('')}
                         </ul>
@@ -436,7 +448,7 @@
                         </div>
                         <div>
                             <h3 class="text-xl font-semibold mb-4">Semua Riwayat Pesanan</h3>
-                            <div id="admin-pesanan-list" class="space-y-4"></div>
+                            <div id="admin-pesanan-list" class="space-y-4 max-h-[60vh] overflow-y-auto p-1"></div>
                         </div>
                     </div>
                  `;
@@ -446,6 +458,7 @@
 
             function renderAdminMenu() {
                 const container = document.getElementById('admin-menu-list');
+                if (!container) return; // Guard clause
                 container.innerHTML = menu.map(item => `
                     <tr class="border-b">
                         <td class="py-2">${item.nama}</td>
@@ -457,15 +470,16 @@
             
             function renderAdminPesanan() {
                 const container = document.getElementById('admin-pesanan-list');
+                if (!container) return; // Guard clause
                  if (pesanan.length === 0) {
-                    container.innerHTML = `<p class="text-gray-500 bg-white p-4 rounded-xl shadow-lg text-center">Belum ada pesanan sama sekali.</p>`;
-                    return;
-                }
+                     container.innerHTML = `<p class="text-gray-500 bg-white p-4 rounded-xl shadow-lg text-center">Belum ada pesanan sama sekali.</p>`;
+                     return;
+                 }
                 container.innerHTML = pesanan.slice().reverse().map(p => `
                      <div class="bg-white p-4 rounded-xl shadow-lg">
                         <div class="flex justify-between items-center">
                             <p class="font-bold">Pesanan #${p.id} (${p.user})</p>
-                            <span class="text-sm font-semibold">${p.status}</span>
+                            <span class="text-sm font-semibold ${p.status === 'Selesai' ? 'text-green-600' : 'text-yellow-600'}">${p.status}</span>
                         </div>
                          <p class="text-sm text-gray-500">Total: Rp ${p.total.toLocaleString('id-ID')}</p>
                     </div>
@@ -483,8 +497,17 @@
                     const jumlah = parseInt(qtyInput.value);
                     const itemMenu = menu.find(m => m.id === id);
                     
-                    if (jumlah > 0 && itemMenu.stok >= jumlah) {
-                        const itemDiKeranjang = keranjang.find(k => k.id === id);
+                    if (jumlah <= 0 || !Number.isInteger(jumlah)) {
+                        // Tidak menggunakan alert, tapi mungkin bisa ganti border input jadi merah
+                        qtyInput.classList.add('border-red-500', 'ring-red-500');
+                        setTimeout(() => qtyInput.classList.remove('border-red-500', 'ring-red-500'), 2000);
+                        return;
+                    }
+
+                    const itemDiKeranjang = keranjang.find(k => k.id === id);
+                    const totalDiKeranjang = itemDiKeranjang ? itemDiKeranjang.jumlah : 0;
+
+                    if (itemMenu.stok >= (jumlah + totalDiKeranjang)) {
                         if (itemDiKeranjang) {
                             itemDiKeranjang.jumlah += jumlah;
                         } else {
@@ -492,7 +515,13 @@
                         }
                         renderKeranjang();
                     } else {
-                        alert('Jumlah pesanan melebihi stok atau tidak valid.');
+                        // Tidak pakai alert, bisa tampilkan pesan error sementara
+                        button.textContent = 'Stok Tidak Cukup!';
+                        button.classList.add('bg-red-500', 'hover:bg-red-600');
+                        setTimeout(() => {
+                            button.innerHTML = '<i class="fas fa-cart-plus"></i> Tambah';
+                            button.classList.remove('bg-red-500', 'hover:bg-red-600');
+                        }, 2000);
                     }
                 }
 
@@ -529,13 +558,15 @@
 
                     pesanan.push(newPesanan);
                     keranjang = [];
-                    renderDashboard();
+                    // Render ulang semua dashboard untuk update (terutama stok di menu siswa)
+                    renderDashboard(); 
                 }
 
                 // Penjual: Hapus Menu
                 if (e.target.classList.contains('hapus-menu-btn') || e.target.parentElement.classList.contains('hapus-menu-btn')) {
-                    const button = e.target.closest('.hapus-menu-btn');
-                    if (confirm('Apakah Anda yakin ingin menghapus menu ini?')) {
+                    // Mengganti confirm() dengan UI kustom akan lebih baik, tapi untuk simplicity:
+                    if (window.confirm('Apakah Anda yakin ingin menghapus menu ini?')) {
+                        const button = e.target.closest('.hapus-menu-btn');
                         const id = parseInt(button.dataset.id);
                         menu = menu.filter(item => item.id !== id);
                         renderMenuListPenjual();
@@ -573,38 +604,56 @@
                     const nama = document.getElementById('nama-baru').value;
                     const harga = parseInt(document.getElementById('harga-baru').value);
                     const stok = parseInt(document.getElementById('stok-baru').value);
-                    const foto = document.getElementById('foto-baru').value;
+                    const foto = document.getElementById('foto-baru').value || `https://placehold.co/600x400/CCCCCC/FFFFFF?text=${nama.replace(' ', '+')}`;
                     
-                    const newItem = {
-                        id: menu.length > 0 ? Math.max(...menu.map(m => m.id)) + 1 : 1,
-                        nama, harga, stok, foto
-                    };
-                    menu.push(newItem);
-                    renderMenuListPenjual();
-                    e.target.reset();
-                 }
+                    if (nama && harga > 0 && stok >= 0) {
+                        const newItem = {
+                            id: menu.length > 0 ? Math.max(...menu.map(m => m.id)) + 1 : 1,
+                            nama,
+                            harga,
+                            stok,
+                            foto
+                        };
+                        menu.push(newItem);
+                        e.target.reset(); // Reset form
+                        renderMenuListPenjual();
+                    } else {
+                        // Bisa tambahkan validasi error di UI
+                        console.error("Data tidak valid");
+                    }
+                }
             });
-            
-            // Modal Edit Logic
+
+            // --- EVENT MODAL ---
+
+            // Penjual: Simpan Edit Menu
             editForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const id = parseInt(document.getElementById('edit-id').value);
-                const item = menu.find(m => m.id === id);
-                if (item) {
-                    item.nama = document.getElementById('edit-nama').value;
-                    item.harga = parseInt(document.getElementById('edit-harga').value);
-                    item.stok = parseInt(document.getElementById('edit-stok').value);
-                    item.foto = document.getElementById('edit-foto').value;
+                const itemIndex = menu.findIndex(m => m.id === id);
+                if (itemIndex > -1) {
+                    menu[itemIndex].nama = document.getElementById('edit-nama').value;
+                    menu[itemIndex].harga = parseInt(document.getElementById('edit-harga').value);
+                    menu[itemIndex].stok = parseInt(document.getElementById('edit-stok').value);
+                    menu[itemIndex].foto = document.getElementById('edit-foto').value;
                 }
                 editModal.style.display = 'none';
                 renderMenuListPenjual();
             });
 
+            // Penjual: Batal Edit
             cancelEditButton.addEventListener('click', () => {
                 editModal.style.display = 'none';
             });
-        });
+            
+            // Klik di luar modal untuk menutup
+            editModal.addEventListener('click', (e) => {
+                if (e.target === editModal) {
+                    editModal.style.display = 'none';
+                }
+            });
 
+        });
     </script>
 </body>
 </html>
